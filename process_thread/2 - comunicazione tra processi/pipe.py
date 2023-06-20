@@ -3,51 +3,69 @@
 import logging
 import os
 import time
-from multiprocessing import Process, Array
+import multiprocessing
+from multiprocessing import Process
+
+"""
+Comunicazione tra processi tramite pipe. La pipe è una risorsa creata e gestita dal SO in modo trasparente rispetto 
+all'utilizzatore, e implementa una logica di coda, quindi con due punti di accesso, uno di scrittura l'altro di lettura 
+"""
 
 # Process1 logic
-def process1(shared):
+def process1(pipe):
     process1_logger = logging.getLogger('process1')
     process1_logger.info(f"Pid:{os.getpid()}")
+
+    # Open the file descriptor
+    file = os.fdopen(pipe.fileno(), 'w')
+    process1_logger.info("Opened file descriptor")
 
     # Write 10 entries
     for i in range(1,11):
 
-        # Attempt to write to our shared memory until succession
+        # Attempt to write to our pipe until succession
         while True:
             try:
                 process1_logger.info(f"Writing {int(i)}")
-                shared[i-1] = i
+                file.write(f"{i}\n")
+                file.flush()
                 if i % 6 == 0:
                     process1_logger.info("Intentionally sleeping for 5 seconds")
                     time.sleep(5)
                 break
-            except Exception as e:
-                print(str(e))
+            except:
                 pass
+
+    # Clean up pipe
+    pipe.close()
 
     # Log completion
     process1_logger.info("Finished process 1")
 
 
 # Process2 logic
-def process2(shared):
+def process2(pipe):
     process2_logger = logging.getLogger('process2')
     process2_logger.info(f"Pid:{os.getpid()}")
 
+    # Open the file descriptor
+    file = os.fdopen(pipe.fileno(), 'r')
+    process2_logger.info("Opened file descriptor")
+
     # Expect 10 entries
-    for i in range(10):
+    count = 0
+    while count < 10:
         while True:
             try:
-                line = shared[i]
-                if line == -1:
-                    process2_logger.info("Data not available sleeping for 1 second before retrying")
-                    time.sleep(1)
-                    raise Exception('pending')
+                line = file.readline()
                 process2_logger.info(f"Read: {int(line)}")
+                count += 1
                 break
             except Exception:
                 pass
+
+    # Clean up pipe
+    pipe.close()
 
     # Log completion
     process2_logger.info("Finished process 2")
@@ -60,12 +78,11 @@ def main():
     parent_logger = logging.getLogger('parent')
     parent_logger.info(f"Pid:{os.getpid()}")
 
-    # Setup shared memory using Array (multiprocessing)
-    arr = Array('i', [-1] * 10)
-    arr2 = Array('i', [-1] * 10)
+    # Setup pipe
+    r, w = multiprocessing.Pipe(False)
 
     # Setup processes
-    procs = [Process(target=process1, args=(arr,)), Process(target=process2, args=(arr,))]
+    procs = [Process(target=process1, args=(w,)), Process(target=process2, args=(r,))]
 
     # Start processes
     for proc in procs:

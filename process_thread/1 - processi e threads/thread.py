@@ -28,16 +28,18 @@ def sleeper(name, num_thread):
     shared_x = randint(10,99)
 
     for i in range(num_thread):
-        subsleeper = Thread(target=sleeping, args=(name + ' ' + str(i),))
+        subsleeper = Thread(target=sleeping, args=(name + ' th ' + str(i),))
         sleeplist.append(subsleeper)
 
-    txt = name + ' sees shared_x being ' + str(shared_x)
+    t = gmtime()
+    txt = "pr " + name + 'initially sees shared_x being ' + str(shared_x) + f" at {t.tm_min}.{t.tm_sec}"
     print(txt)
 
     for s in sleeplist: s.start()
     for s in sleeplist: s.join()
 
-    txt = name + ' sees shared_x being ' + str(shared_x)
+    t = gmtime()
+    txt = "pr " + name + 'finally sees shared_x being ' + str(shared_x) + f" at {t.tm_min}.{t.tm_sec}"
     print(txt)
 
 
@@ -45,16 +47,18 @@ def sleeper(name, num_thread):
 if __name__ == '__main__':
 
     process_list = list()
-    for i in range(10):
-        process_list.append(Process(target=sleeper, args=('bob_' + str(i), randint(2,4),)))
+    for i in range(4):
+        process_list.append(Process(target=sleeper, args=('bob_' + str(i), randint(2,3),)))
 
-    global shared_x
-    shared_x = randint(10,99)
+    global x
+    x = randint(10,99)
 
-    print(shared_x)
+    t = gmtime()
+    print(x," ",t.tm_min,":",t.tm_sec)
 
     for p in process_list: p.start()
 
     for p in process_list: p.join()
 
-    print(shared_x)
+    t = gmtime()
+    print(x," ",t.tm_min,":",t.tm_sec)

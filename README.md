@@ -1,6 +1,7 @@
 # asdsw2023
 
 Progetti, File e Risorse del corso di Architetture dei Sistemi Distribuiti 2022/2023
+Eseguire i programmi in ambiente Linux per compatibilità con le librerie che si interfacciano con il SO.
 
 # Risorse
 

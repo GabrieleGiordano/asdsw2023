@@ -5,13 +5,17 @@ import os
 import time
 from multiprocessing import Process
 
+"""
+Comunicazione tra processi tramite file condiviso gestito come una coda (fifo)
+"""
+
 # Process1 logic
 def process1():
     process1_logger = logging.getLogger('process1')
     process1_logger.info(f"Pid:{os.getpid()}")
     fifo = '/tmp/process_fifo.txt'
 
-    # Create a fifo, os.mkfifo will block until there is a reader (process2)
+    # Create a (file) fifo, os.mkfifo will block until there is a reader (process2)
     os.mkfifo(fifo)
 
     # Open fifo for writing
@@ -69,7 +73,7 @@ def process2():
 
     # Clean up fifo
     file.close()
-    os.remove(fifo)
+    #os.remove(fifo)
 
     # Log completion
     process2_logger.info("Finished process 2")
